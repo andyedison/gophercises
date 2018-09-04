@@ -11,17 +11,12 @@ import (
 	"os"
 )
 
-var filenameFlag string
-
-func init() {
-	flag.StringVar(&filenameFlag, "filename", "problems.csv", "path to problems csv file")
-}
-
 func main() {
+	filename := flag.String("filename", "problems.csv", "path to problems csv file")
 	flag.Parse()
 
 	// read a csv file from command line, default to problems.csv -filename flag
-	content, err := ioutil.ReadFile("problems.csv")
+	content, err := ioutil.ReadFile(*filename)
 	if err != nil {
 		log.Fatal(err)
 	}
