@@ -9,10 +9,12 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"time"
 )
 
 func main() {
 	filename := flag.String("filename", "problems.csv", "path to problems csv file")
+	limit := flag.Int("limit", 30, "time limit in seconds to complete the quiz")
 	flag.Parse()
 
 	// read a csv file from command line, default to problems.csv -filename flag
@@ -49,16 +51,28 @@ func main() {
 	// read out each question, then read in answer. keep track of how many are correct and wrong
 	scanner := bufio.NewScanner(os.Stdin) // define our scanner to read stdin
 	var correct int
+	timer := time.NewTimer(time.Duration(*limit) * time.Second)
+
+problemLoop:
 	for _, p := range problems {
 		fmt.Printf("%s ?  >> ", p.Question)
-		scanner.Scan()
-		a := scanner.Text()
-		if a == p.Answer {
-			correct++
+		answerCh := make(chan string)
+		go func() {
+			scanner.Scan()
+			answerCh <- scanner.Text()
+		}()
+		select {
+		case <-timer.C:
+			fmt.Println()
+			break problemLoop
+		case answer := <-answerCh:
+			if answer == p.Answer {
+				correct++
+			}
 		}
+
 	}
 
 	// output the results at the end
-	fmt.Println("")
 	fmt.Printf("You answered %d out of %d questions right. Thanks for playing.\n\n", correct, len(problems))
 }
